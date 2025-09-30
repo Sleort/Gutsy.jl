@@ -1,0 +1,13 @@
+name = "Gutsy"
+uuid = "2c6f0e68-cde0-4b9c-b842-c0ce1409fb8e"
+authors = ["Troels Arnfred Bojesen <tr-ab@online.no> and contributors"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.11.7"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]
