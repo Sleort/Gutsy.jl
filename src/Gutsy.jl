@@ -4,25 +4,6 @@
 
 # end
 
-#=
-TODO:
-* Spatial-temporal "cutout" with slider and window selection
-* Mark seeds on image with mouse
-    - shift + left-click for positive marks
-    - shift + right-click for negative marks
-    - Tab + click for removing one point
-    - SOMETHING for removing all seeds
-* Based on seeds: generate segmentation
-* Based on segmentation: generate next-frame seeds
-* Iterate through the entire spatial frame.
-
-
-SUB-TODO:
-* Track a window of CartesianIndices instead of a cutout...
-
-
-=#
-
 
 
 using VideoIO
@@ -30,55 +11,55 @@ using GLMakie
 using GeometryBasics
 using Colors
 using ImageSegmentation
-###########################################
+using ProgressMeter
+using Statistics
+using DataInterpolations
 
 
-include("utils.jl")
-include("segmentation_seeding.jl")
 include("Windows.jl")
+include("utils.jl")
+include("videos.jl")
+include("segmentation_seeding.jl")
+include("blob_masking.jl")
+include("blob_processing.jl")
+include("data_exploration.jl")
 
 
 #######################################
 ## Read in a video (lazily)
 short_video = "/home/a46632/Documents/HI/Prosjekter/Laksetarmer in vitro/Video recording/2025-09-24 13-19-38.avi"
 original_video = "/home/a46632/Documents/HI/Prosjekter/Laksetarmer in vitro/Video recording/24.09.25 - Originalfil.avi"
-vpath = original_video
-vreader = VideoIO.openvideo(vpath)
-duration = VideoIO.get_duration(vpath) - 0.5 #Avoid the end due to some rounding convetions
+video = Video(original_video)
 
 
-
-###########################################
-## Look at some cutout of a frame:
-fig = Figure()
-ax1 = Axis(fig[1,1], aspect=DataAspect(), yreversed=true)
-ax2 = Axis(fig[1,2], aspect=DataAspect(), yreversed=true) 
-
-timeslider = Slider(fig[2,1:2], range=0:duration)
-
-t = timeslider.value
-img = @lift begin
-    img = first(seek(vreader, $t))
-    img = parent(img)
-end
-
-#Original image:
-heatmap!(ax1, img; interpolate=false)
-
-seeds = place_seeds!(ax1)
-window = @lift Window($(ax1.finallimits)) #Compute window
-
-#Segmentation:
-_mask = falses(size(img[])) #Storage for the mask to be displayed
-mask = @lift begin
-    segments = seeded_region_growing($img[$window], $seeds[$window])
-    _mask[$window] .= labels_map(segments) .== 1 #Only update the compute window
-    _mask
-end
-heatmap!(ax2, mask; interpolate=false)
-linkaxes!(ax1, ax2)
-
+## Explore data:
+fig, timespan, ppoints, npoints, window = guts_explorer(video)
 fig
 
-## ###########################################
 
+## Brute force masks for a time series:
+# ts = timespan[]
+# masks = track_blob(video, window[], ppoints[], npoints[]; timespan=ts, skip_frames=0);
+
+
+## Animation of data:
+mask = Observable(masks[1])
+ind = Observable(1)
+heatmap(mask; axis=(; aspect=DataAspect(), yreversed=true, title=@lift string($ind, " / ", length(masks))))
+for (i, m) ∈ enumerate(masks)
+    mask[] = m
+    ind[] = i
+    sleep(0.001)
+end
+##
+
+
+## Blob thickness as function of relative position and time:
+sbt = stack(standardized_blob_thickness, masks);
+pyramid = Makie.Pyramid(Float32.(sbt'))
+##
+fig = Figuxre()
+ax = Axis(fig[1,1]; yreversed=true)
+heatmap!(ax, Resampler(pyramid))
+fig
+##

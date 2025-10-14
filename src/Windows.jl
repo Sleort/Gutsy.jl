@@ -33,25 +33,14 @@ iw = i[w]
 xw[iw] == x[i]
 ```
 """
-function Base.getindex(i::CartesianIndex{N}, w::Window{N}) where {N}
-    iw = i - first(w.inds) + one(i)
-    return ifelse(iw ∈ CartesianIndices(w.inds), iw, missing)
-end
+Base.getindex(i::CartesianIndex, w::Window) = ifelse(i ∈ w, relative_to(i, w), missing)
 
 
-#Seeds within a window:
-function Base.getindex(seeds::AbstractVector{T}, w::Window) where {T <: Tuple{CartesianIndex, Integer}}
-    T[(x[1][w], x[2]) for x ∈ seeds if !ismissing(x[1][w])]
-end
+#Return vector of points inside window:
+Base.getindex(points::AbstractVector{T}, w::Window) where {T <: CartesianIndex} = T[relative_to(i, w) for i ∈ points if i ∈ w]
+
+relative_to(i::CartesianIndex{N}, w::Window{N}) where {N} = i - first(w.inds) + one(i)
+Base.in(i::CartesianIndex, w::Window) = i ∈ w.inds
 
 
-
-##
-# x = collect(reshape(1:120, 10,12))
-# w = Window(4:8, 4:7)
-
-# xw = x[w]
-# i = CartesianIndex(5,6)
-# iw = i[w]
-# x[i] == xw[iw]
-
+Base.size(w::Window) = size(w.inds)
