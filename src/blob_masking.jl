@@ -8,7 +8,8 @@ end
 
 
 # Track an identified "blob" in the window for steps steps. (Initial) seed points given...
-function track_blob(video::Video, window::Window, positive_points, negative_points; timespan, max_framecount=typemax(Int), skip_frames=0)
+function track_blob(video::Video, window::Window, positive_points, negative_points; timespan, max_framecount=typemax(Int), frame_stride=1)
+    @assert frame_stride ≥ 1
     tstart, tstop = timespan
     iseek(video, tstart)
 
@@ -22,11 +23,10 @@ function track_blob(video::Video, window::Window, positive_points, negative_poin
     adjust_seed_points!(pp, mask)
     masks = [mask]
 
-    n = tstop - tstart + 1
-    n = min(n, max_framecount)
-    δ = 1 + skip_frames
-    @showprogress for _ ∈ 2:δ:(n - δ)
-        iszero(skip_frames) || skipframes(video, skip_frames)
+    #Following masks:
+    Δt = min(tstop - tstart + 1 - frame_stride, max_framecount)
+    @showprogress for _ ∈ 2:frame_stride:Δt
+        isone(frame_stride) || skipframes(video, frame_stride - 1)
         read!(video, frame)
         mask = blob_mask(wframe, pp, np)
         adjust_seed_points!(pp, mask)

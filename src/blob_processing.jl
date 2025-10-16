@@ -52,5 +52,4 @@ end
 standardized_cutout(x, n::Integer) = standardized_cutout!(Array{Float64}(undef, n), x)
 
 
-###
-standardized_blob_thickness(mask, n=1000) = standardized_cutout(blob_thickness(mask), n)
+standardized_blob_thickness(mask, n=256) = standardized_cutout(blob_thickness(mask), n)

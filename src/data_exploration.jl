@@ -26,21 +26,21 @@ function guts_explorer(video::Video)
     # Blob masking
     ##################
     # Place seeds, find mask...:
-    window = @lift Window($(ax1.finallimits)) #Window where the computations are done
     positive_points, negative_points = place_seed_points!(ax1) #Seed points for masking
+    window = @lift Window($(ax1.finallimits)) #Window where the computations are done
+    
+    maskmaker = @lift MaskMaker($positive_points, $negative_points, $window)
     _mask = falses(size(frame[])) #Storage for the mask to be displayed
     mask = @lift begin
-        pp = $positive_points[$window]
-        np = $negative_points[$window]
-        wframe = @view $frame[$window]
-        _mask[$window] .= blob_mask(wframe, pp, np)
+        _mask[$window] .= $maskmaker($frame)
         _mask
     end
     heatmap!(ax3, mask; interpolate=false)
-    
+
     #Update _positive seeds points_ to center them on positive segment:
     # XXX Not that robust, but it seems to work...
     on(tstart) do t
+        #adjust!(maskmaker[])
         adjust_seed_points!(positive_points[], mask[])
         notify(positive_points)
     end
@@ -51,14 +51,9 @@ function guts_explorer(video::Video)
     yboundary = @lift [trim_limits(blob_thickness($mask))...]
     hlines!(ax3, yboundary; color=:white, linestyle=:dash)
 
-    return fig, timespan, positive_points, negative_points, window
+    #=
+    TODO: Track the width heatmap as the mask width is generated?
+    =#
+    
+    return fig, timespan, maskmaker#positive_points, negative_points, window
 end
-
-
-
-
-
-
-
-
-
