@@ -96,7 +96,7 @@ function guts_explorer(video::Video)
     thickness = @lift fill(NaN, $yresolution, $nframes)
     ylab = @lift range(0,1; length=$yresolution)
     heatmap!(ax4, selected_frames, ylab, @lift($thickness')) #XXX FIX PLOTTING OF LARGE HEATMAPS!
-    on(thickness) do _
+    on(selected_frames) do _
         reset_limits!(ax4)
         #Copy data from old thickness to new thickness array?
     end
