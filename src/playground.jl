@@ -11,8 +11,9 @@ using CSV, Tables
 
 
 ###################
-## Analyzing data
+# Analyzing data
 ###################
+
 ## Read in a video (lazily)
 video_path = "/home/a46632/Documents/HI/Prosjekter/Laksetarmer in vitro/Video recording/24.09.25 - Originalfil.avi"
 video = Video(video_path)
@@ -27,7 +28,7 @@ thickness[] #The (horizontal) thickness of the intestine as a function of relati
 
 
 ###################
-## Storing data
+# Storing data
 ###################
 # If you want to write the `thickness matrix` (only) to a CSV-file:
 path = "mycooldata.csv"

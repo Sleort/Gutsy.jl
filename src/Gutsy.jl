@@ -10,7 +10,6 @@ using Statistics
 using DataInterpolations
 using ProgressMeter
 
-
 include("utils.jl")
 include("Videos.jl")
 include("Windows.jl")
