@@ -53,3 +53,15 @@ standardized_cutout(x, n::Integer) = standardized_cutout!(Array{Float64}(undef, 
 
 
 standardized_blob_thickness(mask, n=256) = standardized_cutout(blob_thickness(mask), n)
+
+###############################
+# Calculate (horizontal) gut thickness of mask, trim away top and bottom (according to trim_limits)
+# and store the result, interpolated, in y
+function gut_thickness!(y::AbstractVector, mask; kws...)
+    horizontal_tickness = blob_thickness(mask)
+    lims = trim_limits(horizontal_tickness; kws...)
+    standardized_cutout!(y, horizontal_tickness, lims)
+    return y
+end
+
+gut_thickness(mask; n=256, kws...) = gut_thickness!(Array{Float64}(undef, n), mask; kws...)

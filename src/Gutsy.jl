@@ -12,11 +12,10 @@ using ProgressMeter
 
 
 include("utils.jl")
-include("videos.jl")
+include("Videos.jl")
 include("Windows.jl")
 include("MaskMaker.jl")
 include("segmentation_seeding.jl")
-include("blob_masking.jl") #TO BE REPLACED BY MaskMaker
 include("blob_processing.jl") #TO BE IMPROVED
 include("data_exploration.jl")
 

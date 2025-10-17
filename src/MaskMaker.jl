@@ -36,7 +36,6 @@ function (m::MaskMaker)(video::Video)
     return mask
 end
 
-
 # Adjust maskmaker seeds given a mask (for time stepping)
 # Currently: adjusting positive seeds only!
 function adjust!(m::MaskMaker, mask::AbstractMatrix{Bool})

@@ -1,72 +1,46 @@
 # TEMPORARY PLAYGROUND. WILL BE DELETED WHEN THINGS ARE UP AND RUNNING PROPERLY!
 #######################################
 
+###################
+## Loading necessary libraries
+###################
 using Gutsy
 using VideoIO
 using GLMakie
+using CSV, Tables
 
+
+###################
+## Analyzing data
+###################
 ## Read in a video (lazily)
 video_path = "/home/a46632/Documents/HI/Prosjekter/Laksetarmer in vitro/Video recording/24.09.25 - Originalfil.avi"
 video = Video(video_path)
 
+## Explore data interactively:
+fig, selected_frames, thickness = guts_explorer(video)
+fig 
 
-## Explore data:
-fig, timespan, maskmaker = guts_explorer(video)
-fig
-
-
-## Brute force masks for a time series:
-ts = timespan[]
-mm = deepcopy(maskmaker[])
-iseek(video, ts[1]) #Move video reader to ts[1]
-
-masks = [begin
-        mask = mm(video)
-        skipframes(video.reader, 10)
-        mask
-    end for t ∈ 1:100];
-sbt = stack(Gutsy.standardized_blob_thickness, masks);
-heatmap(sbt'; axis=(; yreversed=true))
-## ##############################################
-
-mask = Observable(copy(masks[1]))
-ind = Observable(1)
-heatmap(mask; axis=(; aspect=DataAspect(), yreversed=true, title=@lift string($ind, " / ", length(masks))))
-for (i, m) ∈ enumerate(masks)
-    mask[] = m
-    ind[] = i
-    sleep(0.02)
-end
+## The content of the other outputs are:
+selected_frames[] #The selected frame numbers
+thickness[] #The (horizontal) thickness of the intestine as a function of relative vertical position and time
 
 
-## Writing gut thickness to file:
-using CSV, Tables
-thickness = Tables.table(sbt);
-path = "test.csv"
-CSV.write(path, thickness; writeheader=false)
+###################
+## Storing data
+###################
+# If you want to write the `thickness matrix` (only) to a CSV-file:
+path = "mycooldata.csv"
+datamatrix = thickness[]
+CSV.write(path, Tables.table(datamatrix); writeheader=false)
 
+#... and read it back into Julia:
+zombiedata = CSV.read(path, Tables.matrix; header=false)
 
+#If you want to store it together with the selected_frame indices:
+datatable = Tables.table(thickness[]; header=selected_frames[])
+CSV.write(path, datatable)
 
-
-
-#=
-TODO:
-* Update pipeline to MaskMaker functionality
-* Cleanup!
-* Go straight for the guts_thickness?
-* Save to CSV array...
-* Possible to parallelize?
-* 
-=#
-
-
-
-# ## Blob thickness as function of relative position and time:
-# sbt = stack(standardized_blob_thickness, masks);
-# pyramid = Makie.Pyramid(Float32.(sbt'))
-# ##
-# fig = Figure()
-# ax = Axis(fig[1,1]; yreversed=true)
-# heatmap!(ax, Resampler(pyramid))
-# fig
-# ##
+#... and read it back into Julia:
+zombiedata = CSV.read(path, Tables.matrix)
+zombieframenumbers = Int.(first(CSV.File(path; header=false))) #This is a bit hacky. There probably is an easier way!

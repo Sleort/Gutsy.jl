@@ -1,6 +1,6 @@
 name = "Gutsy"
 uuid = "2c6f0e68-cde0-4b9c-b842-c0ce1409fb8e"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Troels Arnfred Bojesen <tr-ab@online.no> and contributors"]
 
 [deps]
