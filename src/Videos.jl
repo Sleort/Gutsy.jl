@@ -5,7 +5,7 @@
 struct Video{R}
     reader::R
     framecount::Int
-    fps::Int
+    fps::Float64
     duration::Float64
 end
 
@@ -13,7 +13,7 @@ function Video(path::String)
     reader = VideoIO.openvideo(path)
     framecount = VideoIO.get_number_frames(path)
     duration = VideoIO.get_duration(path)
-    fps = Int(framecount / duration) #Should be an integer, otherwise something is wrong!
+    fps = framecount / duration #Should be an integer, otherwise something is wrong!
     return Video(reader, framecount, fps, duration)
 end
 
@@ -34,7 +34,6 @@ framecount(video::Video, t) = round(Int, fps(video) * t)
 VideoIO.skipframes(video::Video, n) = skipframes(video.reader, n)
 
 
-
 #Read a frame, increment the reader by one
 Base.read(video::Video) = parent(read(video.reader)) #Better to work with the original array than the permuteddims one; it fits Makie better...
 Base.read!(video, frame) = read!(video.reader, frame) #Frame is also mutated!
@@ -48,8 +47,7 @@ Base.position(video::Video) = position(video.reader)
 
 #Seek index of frame:
 iseek(video::Video, i::Integer) = seek(video, i / fps(video))
-iposition(video::Video) = Int(fps(video) * position(video))
-
+iposition(video::Video) = round(Int, fps(video) * position(video))
 
 
 # Get the i'th frame of the video (XXX approximately? It's a bit hard to figure out the internal counting in the VideoIO.Reader...)
