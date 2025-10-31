@@ -15,12 +15,17 @@ using CSV, Tables
 ###################
 
 ## Read in a video (lazily)
-video_path = "/home/a46632/Documents/HI/Prosjekter/Laksetarmer in vitro/Video recording/24.09.25 - Originalfil.avi"
+video_path = "/home/a46632/Documents/HI/Prosjekter/Laksetarmer in vitro/Video recordings/28.10.25 - Originalfil.avi"
 video = Video(video_path)
 
 ## Explore data interactively:
 fig, selected_frames, thickness = guts_explorer(video)
 fig 
+
+## Explore data interactively, but smaller marker size (default is markersize=20):
+fig, selected_frames, thickness = guts_explorer(video; markersize=10)
+fig 
+
 
 ## The content of the other outputs are:
 selected_frames[] #The selected frame numbers

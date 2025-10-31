@@ -1,4 +1,4 @@
-function guts_explorer(video::Video)
+function guts_explorer(video::Video; kws...)
     fig = Figure()
     ax1 = Axis(fig[1, 1], aspect=DataAspect(), yreversed=true, title="First frame")
     ax2 = Axis(fig[1, 3], aspect=DataAspect(), yreversed=true, title="Last frame")
@@ -9,12 +9,31 @@ function guts_explorer(video::Video)
     # Time span 
     ##################
     totframes = framecount(video) - 1 #Effective number of frames to be used
-    timeslider = IntervalSlider(fig[end+1, :]; range=1:totframes, snap=false) #Counting in frame indices... Need to remove last because of issues...
+    totrange = 1:totframes
+    timeslider = IntervalSlider(fig[end+1, :]; range=totrange, snap=false) #Counting in frame indices... Need to remove last because of issues...
     timespan = @lift range($(timeslider.interval)...)
     tstart = @lift first($timespan)
     tstop = @lift last($timespan)
-    timeslider_label = @lift string("Frames ", $tstart, " to ", $tstop)
-    Label(fig[end+1, :], timeslider_label, tellwidth=false)
+
+    #Display/edit current time span
+    fig[end+1, :] = timespangrid = GridLayout(tellwidth=false)
+    Label(timespangrid[1, 1], "Frames ", tellwidth=true)
+    startframebox = Textbox(timespangrid[1, end+1], placeholder=string(first(totrange)), validator=Int, tellwidth=true, reset_on_defocus=true, textcolor_placeholder=:black)
+    Label(timespangrid[1, end+1], " to ", tellwidth=true)
+    stopframebox = Textbox(timespangrid[1, end+1], placeholder=string(last(totrange)), validator=Int, tellwidth=true, reset_on_defocus=true, textcolor_placeholder=:black)
+    on(timespan) do ts
+        startframebox.displayed_string[] = string(first(ts))
+        stopframebox.displayed_string[] = string(last(ts))
+    end
+    on(startframebox.stored_string) do s
+        t = parse(Int, s)
+        set_close_to!(timeslider, t, tstop[])
+    end
+    on(stopframebox.stored_string) do s
+        t = parse(Int, s)
+        set_close_to!(timeslider, tstart[], t)
+    end
+
 
     ##################
     # Frame images
@@ -23,11 +42,12 @@ function guts_explorer(video::Video)
     heatmap!(ax1, frame; interpolate=false)
     heatmap!(ax2, @lift get_frame(video, $tstop); interpolate=false)
 
+
     ##################
     # Blob masking
     ##################
     # Place seeds, find mask...:
-    positive_points, negative_points = place_seed_points!(ax1) #Seed points for masking
+    positive_points, negative_points = place_seed_points!(ax1; kws...) #Seed points for masking
     window = @lift Window($(ax1.finallimits)) #Window where the computations are done
 
     maskmaker = @lift MaskMaker($positive_points, $negative_points, $window)
@@ -45,6 +65,7 @@ function guts_explorer(video::Video)
         notify(positive_points)
     end
 
+
     ##################
     # Relative length limits:
     ##################
@@ -61,13 +82,13 @@ function guts_explorer(video::Video)
 
     #Heatmap
     ax4 = Axis(fig[end+1, :];
-        yreversed=true, 
+        yreversed=true,
         xlabel="Frame number",
-        xtickformat = values -> string.(Int.(values)),
-        ylabel="Relative vertical position", 
+        xtickformat=values -> string.(Int.(values)),
+        ylabel="Relative vertical position",
         title="Horizontal thickness as function of frame number"
-        )
-    
+    )
+
     #Controllers
     fig[end+1, :] = inputgrid = GridLayout(tellwidth=false)
 
@@ -94,7 +115,7 @@ function guts_explorer(video::Video)
 
     # Thickness plot
     thickness = @lift fill(NaN, $yresolution, $nframes)
-    ylab = @lift range(0,1; length=$yresolution)
+    ylab = @lift range(0, 1; length=$yresolution)
     heatmap!(ax4, selected_frames, ylab, @lift($thickness')) #XXX FIX PLOTTING OF LARGE HEATMAPS!
     on(selected_frames) do _
         reset_limits!(ax4)
@@ -108,7 +129,7 @@ function guts_explorer(video::Video)
 
         @async @showprogress for i ∈ eachindex(selected_frames[]) #1:nframes
             mask_i = mm(frame)
-            thickness[][:, i] .= gut_thickness(mask_i; n = yresolution[])
+            thickness[][:, i] .= gut_thickness(mask_i; n=yresolution[])
             i % NOTIFY_PERIOD == 0 && notify(thickness) #For live updating...
             # #yield() #Not necessary when using @showprogress ?
             adjust!(mm, mask_i) #Adjust masker for next frame
@@ -121,7 +142,7 @@ function guts_explorer(video::Video)
     # Empty heatmap:
     emptybutton = Button(inputgrid[1, end+1]; label="Clear plot")
     on(emptybutton.clicks) do clk
-        fill!(thickness[],  NaN)
+        fill!(thickness[], NaN)
         notify(thickness)
     end
 
