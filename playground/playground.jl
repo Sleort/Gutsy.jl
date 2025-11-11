@@ -39,7 +39,7 @@ thickness[] #The (horizontal) thickness of the intestine as a function of relati
 path = "mycooldata.csv"
 datamatrix = thickness[]
 CSV.write(path, Tables.table(datamatrix); writeheader=false)
-jr
+
 #... and read it back into Julia:
 zombiedata = CSV.read(path, Tables.matrix; header=false)
 
