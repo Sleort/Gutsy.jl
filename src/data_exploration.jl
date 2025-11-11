@@ -70,8 +70,9 @@ function guts_explorer(video::Video; kws...)
     ##################
     # Relative length limits:
     ##################
-    yboundary = @lift [trim_limits(blob_thickness($mask))...]
+    yboundary = @lift [trim_limits(blob_thickness($mask), $positive_points)...]
     hlines!(ax3, yboundary; color=:white, linestyle=:dash)
+
 
     ##################
     # Making a time series

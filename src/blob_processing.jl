@@ -7,7 +7,7 @@ blob_thickness(mask) = vec(sum(mask; dims=1))
 
 
 """
-    trim_limits(thickness::AbstractVector; threshold=0.15, margin=0.3)
+    trim_limits(thickness::AbstractVector; threshold=0.2, margin=0.4)
 
 Find the "trim cuts" of a vector of thickness values.
 
@@ -35,7 +35,16 @@ function trim_limits(thickness::AbstractVector; threshold=0.2, margin=0.4)
     return (i, lastindex(thickness))
 end
 
-
+# Same as trim_limits(thickness; kws...), but making sure that the limits are limited by the positive points...
+function trim_limits(thickness, positive_points; kws...)
+    a, b = trim_limits(thickness; kws...)
+    for p ∈ positive_points
+        py = last(Tuple(p)) #y component
+        a = min(a, py) #Lower limit always smaller than the positive points
+        b = max(b, py) #Upper limit always larger than the positive points
+    end
+    return a, b
+end
 
 
 ###########################
